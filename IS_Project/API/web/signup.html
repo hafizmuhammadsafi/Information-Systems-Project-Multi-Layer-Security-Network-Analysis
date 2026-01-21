@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSec Registration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #00ff41; position: relative; overflow: hidden; }
+        .matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.05; z-index: 0; }
+        .container { background: rgba(0, 20, 40, 0.95); padding: 40px; border-radius: 15px; box-shadow: 0 0 40px rgba(0, 255, 65, 0.4); border: 2px solid #00ff41; width: 90%; max-width: 450px; position: relative; z-index: 1; animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        .header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 32px; text-shadow: 0 0 15px #00ff41; animation: glow 2s ease-in-out infinite; margin-bottom: 10px; }
+        @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; } 50% { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41, 0 0 40px #00ff41; } }
+        .subtitle { color: #aaa; font-size: 14px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #00ff41; font-size: 14px; }
+        .input-group input { width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.6); border: 1px solid #00ff41; color: #00ff41; font-family: 'Courier New', monospace; font-size: 14px; border-radius: 8px; transition: all 0.3s; }
+        .input-group input:focus { outline: none; box-shadow: 0 0 15px rgba(0, 255, 65, 0.6); border-color: #00ff41; background: rgba(0, 0, 0, 0.8); }
+        .input-group input::placeholder { color: #555; }
+        .requirement { font-size: 13px; margin: 5px 0; color: #ef4444; transition: color 0.3s; }
+        #captcha-section { display: none; background: rgba(0, 0, 0, 0.5); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #00ff41; }
+        #captcha-section p { margin: 0 0 15px 0; font-weight: bold; color: #00ff41; font-size: 14px; }
+        #captcha-img { width: 100%; max-width: 200px; height: auto; border: 1px solid #00ff41; border-radius: 4px; background: #000; }
+        #captcha-section button { background: none; border: none; color: #00ff41; cursor: pointer; font-size: 12px; text-decoration: underline; padding: 5px; margin: 10px 0; transition: all 0.3s; }
+        #captcha-section button:hover { color: #00cc33; text-shadow: 0 0 10px #00ff41; }
+        #captcha-input { width: 90%; text-align: center; text-transform: uppercase; margin-top: 10px; }
+        .btn { width: 100%; padding: 14px; background: transparent; border: 2px solid #00ff41; color: #00ff41; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: all 0.3s; border-radius: 8px; position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: rgba(0, 255, 65, 0.3); transform: translate(-50%, -50%); transition: width 0.6s, height 0.6s; }
+        .btn:hover::before { width: 300px; height: 300px; }
+        .btn:hover { background: #00ff41; color: #0a0e27; box-shadow: 0 0 25px rgba(0, 255, 65, 0.8); transform: translateY(-2px); }
+        .btn span { position: relative; z-index: 1; }
+        .links { margin-top: 25px; text-align: center; }
+        .links a { color: #00ff41; text-decoration: none; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .links a:hover { color: #00cc33; text-shadow: 0 0 10px #00ff41; }
+        .divider { height: 1px; background: linear-gradient(to right, transparent, #00ff41, transparent); margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ CYBERSEC ⚡</h1>
+            <p class="subtitle">NEW AGENT REGISTRATION</p>
+        </div>
+
+        <div class="input-group">
+            <label>👤 USERNAME</label>
+            <input id="name" type="text" placeholder="Enter username">
+        </div>
+
+        <div class="input-group">
+            <label>📧 EMAIL ADDRESS</label>
+            <input id="email" type="text" placeholder="agent@cybersec.com">
+        </div>
+
+        <div class="input-group">
+            <label>🔒 PASSWORD</label>
+            <input id="password" type="password" placeholder="Create secure password" oninput="validatePassword(this.value)" onkeydown="handlePasswordEnter(event)">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <div id="rule-alpha" class="requirement">✘ Letters (A-Z)</div>
+            <div id="rule-num" class="requirement">✘ Numbers (0-9)</div>
+            <div id="rule-sym" class="requirement">✘ Symbols (_@!-)</div>
+        </div>
+
+        <div id="captcha-section">
+            <p>SECURITY VERIFICATION</p>
+            <img id="captcha-img" src="" alt="Loading CAPTCHA...">
+            <button type="button" onclick="refreshCaptcha()">↻ Generate New Code</button>
+            <input id="captcha-input" type="text" placeholder="ENTER CODE">
+        </div>
+
+        <button id="signup-btn" class="btn" onclick="signupUser()" style="display: none;">
+            <span>CREATE ACCOUNT</span>
+        </button>
+
+        <div class="divider"></div>
+
+        <div class="links">
+            <a onclick="goLogin()">← Back to Login</a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const letters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 14, 39, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

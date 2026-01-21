@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSec Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #00ff41;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        .container {
+            background: rgba(0, 20, 40, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.4);
+            border: 2px solid #00ff41;
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 32px;
+            text-shadow: 0 0 15px #00ff41;
+            animation: glow 2s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+            }
+            50% {
+                text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41, 0 0 40px #00ff41;
+            }
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff41;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+            border-color: #00ff41;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .input-group input::placeholder {
+            color: #555;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(0, 255, 65, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            background: #00ff41;
+            color: #0a0e27;
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .message {
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .message.error {
+            background: rgba(255, 0, 64, 0.2);
+            border: 1px solid #ff0040;
+            color: #ff0040;
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            display: block;
+        }
+
+        .message.blocked {
+            background: rgba(255, 165, 0, 0.2);
+            border: 1px solid #ffa500;
+            color: #ffa500;
+            display: block;
+        }
+
+        .links {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .links a {
+            color: #00ff41;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .links a:hover {
+            color: #00cc33;
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        .loading {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff41;
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .security-badge {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .security-badge::before {
+            content: '🔒 ';
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #00ff41, transparent);
+            margin: 25px 0;
+        }
+
+        .attempts-warning {
+            text-align: center;
+            font-size: 12px;
+            color: #ff0040;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <h1>⚡ CYBERSEC ⚡</h1>
+            <p class="subtitle">SECURE AUTHENTICATION SYSTEM</p>
+        </div>
+
+        <form id="loginForm" onsubmit="return false;">
+            <div class="input-group">
+                <label>📧 EMAIL ADDRESS</label>
+                <input type="email" id="email" placeholder="agent@cybersec.com" required autofocus>
+            </div>
+
+            <div class="input-group">
+                <label>🔑 PASSWORD</label>
+                <input type="password" id="password" placeholder="Enter your secure password" required>
+            </div>
+
+            <button type="submit" class="btn" onclick="login()">
+                <span>ACCESS SYSTEM</span>
+            </button>
+        </form>
+
+        <div class="loading" id="loading"></div>
+        <div class="message" id="message"></div>
+        <div class="attempts-warning" id="attemptsWarning"></div>
+
+        <div class="divider"></div>
+
+        <div class="links">
+            <a onclick="goToSignup()">Create Account</a>
+            <span style="color: #555;">|</span>
+            <a onclick="goToForgot()">Forgot Password?</a>
+        </div>
+
+        <div class="security-badge">
+            MULTI-LAYER AUTHENTICATION | OTP VERIFIED
+        </div>
+    </div>
+
+    <script>
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 14, 39, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            const loading = document.getElementById('loading');
+            const attemptsWarning = document.getElementById('attemptsWarning');
+
+            if (!email || !password) {
+                showMessage('Please fill in all fields!', 'error');
+                return;
+            }
+
+            loading.style.display = 'block';
+            messageDiv.style.display = 'none';
+            attemptsWarning.textContent = '';
+
+            try {
+                const result = await pywebview.api.login(email, password);
+                loading.style.display = 'none';
+
+                if (result.status === 'otp_sent') {
+                    showMessage('✓ OTP sent to your email! Check your inbox.', 'success');
+                    setTimeout(() => {
+                        pywebview.api.open_otp_page(result.email, 'login');
+                    }, 1500);
+                } 
+                else if (result.status === 'blocked') {
+                    const minutes = Math.floor(result.remaining_time / 60);
+                    const seconds = result.remaining_time % 60;
+                    showMessage(
+                        `⚠️ Account temporarily blocked! Too many failed attempts. Try again in ${minutes}m ${seconds}s`, 
+                        'blocked'
+                    );
+                } 
+                else if (result.status === 'wrong') {
+                    showMessage('❌ Invalid password!', 'error');
+                    attemptsWarning.textContent = '⚠️ Multiple failed attempts will lock your account';
+                } 
+                else {
+                    showMessage(result.message || 'Login failed!', 'error');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Connection error. Please try again.', 'error');
+                console.error(error);
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        function goToSignup() {
+            pywebview.api.open_signup();
+        }
+
+        function goToForgot() {
+            pywebview.api.open_forgot();
+        }
+
+        document.getElementById('email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('password').focus();
+            }
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>

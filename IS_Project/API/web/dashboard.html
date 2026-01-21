@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSec Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: #0a0e27; color: #00ff41; overflow-x: hidden; }
+        .matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.03; z-index: -1; pointer-events: none; }
+        .header { background: rgba(0, 20, 40, 0.95); padding: 15px 30px; border-bottom: 2px solid #00ff41; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 20px rgba(0, 255, 65, 0.3); }
+        .header h1 { font-size: 24px; text-shadow: 0 0 10px #00ff41; animation: glow 2s ease-in-out infinite; }
+        @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; } 50% { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41; } }
+        .user-info { display: flex; align-items: center; gap: 20px; }
+        .user-name { color: #00ff41; font-weight: bold; }
+        .logout-btn { background: transparent; border: 1px solid #ff0040; color: #ff0040; padding: 8px 20px; cursor: pointer; font-family: 'Courier New', monospace; transition: all 0.3s; }
+        .logout-btn:hover { background: #ff0040; color: #0a0e27; box-shadow: 0 0 15px #ff0040; }
+        .container { display: grid; grid-template-columns: 250px 1fr; min-height: calc(100vh - 70px); }
+        .sidebar { background: rgba(10, 20, 40, 0.8); border-right: 1px solid #00ff41; padding: 20px; }
+        .menu-item { padding: 12px 15px; margin: 5px 0; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; border-radius: 4px; }
+        .menu-item:hover, .menu-item.active { background: rgba(0, 255, 65, 0.1); border-color: #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.3); }
+        .menu-item::before { content: "▸ "; color: #00ff41; }
+        .main-content { padding: 30px; overflow-y: auto; }
+        .section { display: none; animation: fadeIn 0.5s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .panel { background: rgba(0, 20, 40, 0.6); border: 1px solid #00ff41; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); }
+        .panel h2 { color: #00ff41; margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid #00ff41; padding-bottom: 10px; }
+        .input-group { margin: 15px 0; }
+        .input-group label { display: block; margin-bottom: 5px; color: #00ff41; }
+        .input-group input { width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #00ff41; color: #00ff41; font-family: 'Courier New', monospace; border-radius: 4px; }
+        .btn { background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 10px 25px; cursor: pointer; font-family: 'Courier New', monospace; margin: 5px; transition: all 0.3s; border-radius: 4px; }
+        .btn:hover { background: #00ff41; color: #0a0e27; box-shadow: 0 0 15px #00ff41; }
+        .output { background: rgba(0, 0, 0, 0.7); border: 1px solid #00ff41; padding: 15px; margin-top: 15px; min-height: 100px; max-height: 400px; overflow-y: auto; font-size: 12px; line-height: 1.6; border-radius: 4px; }
+        .terminal { background: #000; border: 2px solid #00ff41; padding: 20px; height: 500px; overflow-y: auto; font-size: 14px; border-radius: 8px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); }
+        .terminal-line { margin: 5px 0; }
+        .terminal-prompt::before { content: "root@cybersec:~$ "; color: #ff0040; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .stat-card { background: rgba(0, 20, 40, 0.8); border: 1px solid #00ff41; padding: 20px; border-radius: 8px; text-align: center; transition: all 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0, 255, 65, 0.4); }
+        .stat-value { font-size: 32px; color: #00ff41; font-weight: bold; text-shadow: 0 0 10px #00ff41; }
+        .stat-label { color: #aaa; margin-top: 10px; }
+        .connection-table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+        .connection-table th, .connection-table td { border: 1px solid #00ff41; padding: 10px; text-align: left; }
+        .connection-table th { background: rgba(0, 255, 65, 0.2); }
+        .connection-table tr:hover { background: rgba(0, 255, 65, 0.1); }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(0, 255, 65, 0.3); border-radius: 50%; border-top-color: #00ff41; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error { color: #ff0040; padding: 10px; border: 1px solid #ff0040; background: rgba(255, 0, 64, 0.1); margin-top: 10px; border-radius: 4px; }
+        .success { color: #00ff41; padding: 10px; border: 1px solid #00ff41; background: rgba(0, 255, 65, 0.1); margin-top: 10px; border-radius: 4px; }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.5); }
+        ::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 5px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } .sidebar { border-right: none; border-bottom: 1px solid #00ff41; } }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    <div class="header">
+        <h1>⚡ CYBERSEC COMMAND CENTER ⚡</h1>
+        <div class="user-info">
+            <span class="user-name" id="username">USER</span>
+            <button class="logout-btn" onclick="logout()">LOGOUT</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <div class="menu-item active" onclick="showSection('overview')">System Overview</div>
+            <div class="menu-item" onclick="showSection('network')">Network Scanner</div>
+            <div class="menu-item" onclick="showSection('port')">Port Scanner</div>
+            <div class="menu-item" onclick="showSection('ip')">IP Tracker</div>
+            <div class="menu-item" onclick="showSection('dns')">DNS Lookup</div>
+            <div class="menu-item" onclick="showSection('connections')">Active Connections</div>
+            <div class="menu-item" onclick="showSection('ping')">Ping Tool</div>
+            <div class="menu-item" onclick="showSection('traceroute')">Traceroute</div>
+            <div class="menu-item" onclick="showSection('terminal')">Terminal</div>
+        </div>
+        <div class="main-content">
+            <div id="overview" class="section active">
+                <div class="panel"><h2>⚙️ SYSTEM INFORMATION</h2><button class="btn" onclick="loadSystemInfo()">SCAN SYSTEM</button><div id="systemOutput" class="output">Click SCAN SYSTEM to begin...</div></div>
+                <div class="panel"><h2>📊 NETWORK STATISTICS</h2><button class="btn" onclick="loadNetworkStats()">GET STATS</button><div class="stats-grid" id="statsGrid"></div></div>
+            </div>
+            <div id="network" class="section"><div class="panel"><h2>🌐 NETWORK INTERFACES</h2><button class="btn" onclick="scanInterfaces()">SCAN INTERFACES</button><div id="interfaceOutput" class="output">Click SCAN INTERFACES to discover network adapters...</div></div></div>
+            <div id="port" class="section"><div class="panel"><h2>🔍 PORT SCANNER</h2><div class="input-group"><label>Target Host:</label><input type="text" id="portHost" placeholder="e.g., 127.0.0.1 or google.com"></div><div class="input-group"><label>Port:</label><input type="number" id="portNumber" placeholder="e.g., 80, 443, 22"></div><button class="btn" onclick="scanPort()">SCAN PORT</button><div id="portOutput" class="output">Enter host and port to scan...</div></div></div>
+            <div id="ip" class="section"><div class="panel"><h2>🌍 IP GEOLOCATION TRACKER</h2><div class="input-group"><label>IP Address (leave empty for your IP):</label><input type="text" id="ipAddress" placeholder="e.g., 8.8.8.8"></div><button class="btn" onclick="trackIP()">TRACK IP</button><button class="btn" onclick="trackMyIP()">TRACK MY IP</button><div id="ipOutput" class="output">Enter an IP address to track its location...</div></div></div>
+            <div id="dns" class="section"><div class="panel"><h2>🔎 DNS LOOKUP</h2><div class="input-group"><label>Domain Name:</label><input type="text" id="dnsHost" placeholder="e.g., google.com"></div><button class="btn" onclick="lookupDNS()">LOOKUP</button><div id="dnsOutput" class="output">Enter a domain name to resolve...</div></div></div>
+            <div id="connections" class="section"><div class="panel"><h2>🔗 ACTIVE NETWORK CONNECTIONS</h2><button class="btn" onclick="getConnections()">REFRESH CONNECTIONS</button><div id="connectionsOutput" class="output">Click REFRESH to view active connections...</div></div></div>
+            <div id="ping" class="section"><div class="panel"><h2>📡 PING TOOL</h2><div class="input-group"><label>Host:</label><input type="text" id="pingHost" placeholder="e.g., google.com"></div><button class="btn" onclick="pingHost()">PING</button><div id="pingOutput" class="output">Enter a host to ping...</div></div></div>
+            <div id="traceroute" class="section"><div class="panel"><h2>🛣️ TRACEROUTE</h2><div class="input-group"><label>Destination:</label><input type="text" id="traceHost" placeholder="e.g., google.com"></div><button class="btn" onclick="traceRoute()">TRACE ROUTE</button><div id="traceOutput" class="output">Enter a destination to trace the route...</div></div></div>
+            <div id="terminal" class="section"><div class="panel"><h2>💻 COMMAND TERMINAL</h2><div class="terminal" id="terminalOutput"><div class="terminal-line" style="color: #00ff41;">╔═══════════════════════════════════════╗</div><div class="terminal-line" style="color: #00ff41;">║   CYBERSEC TERMINAL v2.0             ║</div><div class="terminal-line" style="color: #00ff41;">║   Type 'help' for available commands  ║</div><div class="terminal-line" style="color: #00ff41;">╚═══════════════════════════════════════╝</div><div class="terminal-line"></div></div><div class="input-group" style="margin-top: 15px;"><input type="text" id="terminalInput" placeholder="Enter command..." onkeypress="if(event.key==='Enter') executeCommand()"><button class="btn" onclick="executeCommand()">EXECUTE</button></div></div></div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('matrix'); const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const letters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'; const fontSize = 16; const columns = canvas.width / fontSize; const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() { ctx.fillStyle = 'rgba(10, 14, 39, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#00ff41'; ctx.font = fontSize + 'px monospace'; for (let i = 0; i < drops.length; i++) { const text = letters[Math.floor(Math.random() * letters.length)]; ctx.fillText(text, i * fontSize, drops[i] * fontSize); if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) { drops[i] = 0; } drops[i]++; } }
+        setInterval(drawMatrix, 35);
+        const urlParams = new URLSearchParams(window.location.search); const username = urlParams.get('user') || 'ANONYMOUS'; document.getElementById('username').textContent = username;
+        function showSection(sectionId) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active')); document.getElementById(sectionId).classList.add('active'); event.target.classList.add('active'); }
+        async function loadSystemInfo() { const output = document.getElementById('systemOutput'); output.innerHTML = '<div class="loading"></div> Scanning system...'; try { const result = await pywebview.api.get_system_info(); if (result.status === 'success') { const data = result.data; output.innerHTML = `<strong>HOSTNAME:</strong> ${data.hostname}<br><strong>PLATFORM:</strong> ${data.platform} ${data.platform_release}<br><strong>ARCHITECTURE:</strong> ${data.architecture}<br><strong>PROCESSOR:</strong> ${data.processor}<br><strong>CPU CORES:</strong> ${data.cpu_count}<br><strong>CPU USAGE:</strong> ${data.cpu_percent}%<br><strong>RAM:</strong> ${data.ram}<br><strong>LOCAL IP:</strong> ${data.ip_address}<br>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function loadNetworkStats() { const grid = document.getElementById('statsGrid'); grid.innerHTML = '<div class="loading"></div>'; try { const result = await pywebview.api.get_network_stats(); if (result.status === 'success') { const data = result.data; grid.innerHTML = `<div class="stat-card"><div class="stat-value">${formatBytes(data.bytes_sent)}</div><div class="stat-label">Bytes Sent</div></div><div class="stat-card"><div class="stat-value">${formatBytes(data.bytes_recv)}</div><div class="stat-label">Bytes Received</div></div><div class="stat-card"><div class="stat-value">${data.packets_sent}</div><div class="stat-label">Packets Sent</div></div><div class="stat-card"><div class="stat-value">${data.packets_recv}</div><div class="stat-label">Packets Received</div></div>`; } else { grid.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { grid.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        function formatBytes(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB'; if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB'; return (bytes / 1073741824).toFixed(2) + ' GB'; }
+        async function scanInterfaces() { const output = document.getElementById('interfaceOutput'); output.innerHTML = '<div class="loading"></div> Scanning interfaces...'; try { const result = await pywebview.api.get_network_interfaces(); if (result.status === 'success') { let html = ''; for (const [name, addresses] of Object.entries(result.data)) { html += `<strong>${name}:</strong><br>`; addresses.forEach(addr => { html += `  • ${addr.address} (${addr.family})<br>`; }); html += '<br>'; } output.innerHTML = html; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function scanPort() { const host = document.getElementById('portHost').value; const port = document.getElementById('portNumber').value; const output = document.getElementById('portOutput'); if (!host || !port) { output.innerHTML = '<div class="error">Please enter both host and port!</div>'; return; } output.innerHTML = '<div class="loading"></div> Scanning port...'; try { const result = await pywebview.api.scan_port(host, port); if (result.status === 'success') { const status = result.open ? '<span style="color: #00ff41;">OPEN ✓</span>' : '<span style="color: #ff0040;">CLOSED ✗</span>'; output.innerHTML = `<strong>HOST:</strong> ${result.host}<br><strong>PORT:</strong> ${result.port}<br><strong>STATUS:</strong> ${status}<br>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function trackIP() { const ip = document.getElementById('ipAddress').value; const output = document.getElementById('ipOutput'); output.innerHTML = '<div class="loading"></div> Tracking IP...'; try { const result = await pywebview.api.get_ip_info(ip || null); if (result.status === 'success') { const data = result.data; output.innerHTML = `<strong>IP ADDRESS:</strong> ${data.ip}<br><strong>COUNTRY:</strong> ${data.country}<br><strong>REGION:</strong> ${data.region}<br><strong>CITY:</strong> ${data.city}<br><strong>ZIP:</strong> ${data.zip || 'N/A'}<br><strong>COORDINATES:</strong> ${data.lat}, ${data.lon}<br><strong>ISP:</strong> ${data.isp}<br><strong>ORGANIZATION:</strong> ${data.org}<br><strong>TIMEZONE:</strong> ${data.timezone}<br>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function trackMyIP() { document.getElementById('ipAddress').value = ''; trackIP(); }
+        async function lookupDNS() { const host = document.getElementById('dnsHost').value; const output = document.getElementById('dnsOutput'); if (!host) { output.innerHTML = '<div class="error">Please enter a domain name!</div>'; return; } output.innerHTML = '<div class="loading"></div> Looking up DNS...'; try { const result = await pywebview.api.dns_lookup(host); if (result.status === 'success') { output.innerHTML = `<strong>DOMAIN:</strong> ${result.domain}<br><strong>IP ADDRESS:</strong> ${result.ip}<br>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function getConnections() { const output = document.getElementById('connectionsOutput'); output.innerHTML = '<div class="loading"></div> Fetching connections...'; try { const result = await pywebview.api.get_active_connections(); if (result.status === 'success') { let html = '<table class="connection-table"><thead><tr><th>Local Address</th><th>Remote Address</th><th>Status</th><th>PID</th></tr></thead><tbody>'; result.data.forEach(conn => { html += `<tr><td>${conn.local_address}</td><td>${conn.remote_address}</td><td>${conn.status}</td><td>${conn.pid || 'N/A'}</td></tr>`; }); html += '</tbody></table>'; output.innerHTML = html; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function pingHost() { const host = document.getElementById('pingHost').value; const output = document.getElementById('pingOutput'); if (!host) { output.innerHTML = '<div class="error">Please enter a host!</div>'; return; } output.innerHTML = '<div class="loading"></div> Pinging host...'; try { const result = await pywebview.api.ping_host(host); if (result.status === 'success') { output.innerHTML = `<pre>${result.output}</pre>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        async function traceRoute() { const host = document.getElementById('traceHost').value; const output = document.getElementById('traceOutput'); if (!host) { output.innerHTML = '<div class="error">Please enter a destination!</div>'; return; } output.innerHTML = '<div class="loading"></div> Tracing route... (this may take a while)'; try { const result = await pywebview.api.traceroute(host); if (result.status === 'success') { output.innerHTML = `<pre>${result.output}</pre>`; } else { output.innerHTML = `<div class="error">Error: ${result.message}</div>`; } } catch (e) { output.innerHTML = `<div class="error">Error: ${e}</div>`; } }
+        const terminalCommands = { help: 'Available commands: help, clear, sysinfo, netstat, whoami, date, echo [text]', clear: () => { document.getElementById('terminalOutput').innerHTML = ''; return ''; }, sysinfo: async () => { const result = await pywebview.api.get_system_info(); if (result.status === 'success') { return `System: ${result.data.platform}\nHostname: ${result.data.hostname}\nCPU: ${result.data.processor}`; } return 'Error getting system info'; }, netstat: async () => { const result = await pywebview.api.get_network_stats(); if (result.status === 'success') { return `Bytes Sent: ${formatBytes(result.data.bytes_sent)}\nBytes Received: ${formatBytes(result.data.bytes_recv)}`; } return 'Error getting network stats'; }, whoami: () => username, date: () => new Date().toString(), echo: (args) => args.join(' ') };
+        async function executeCommand() { const input = document.getElementById('terminalInput'); const terminal = document.getElementById('terminalOutput'); const command = input.value.trim(); if (!command) return; const cmdLine = document.createElement('div'); cmdLine.className = 'terminal-line terminal-prompt'; cmdLine.textContent = command; terminal.appendChild(cmdLine); const parts = command.split(' '); const cmd = parts[0].toLowerCase(); const args = parts.slice(1); let output = ''; if (terminalCommands[cmd]) { if (typeof terminalCommands[cmd] === 'function') { output = await terminalCommands[cmd](args); } else { output = terminalCommands[cmd]; } } else { output = `Command not found: ${cmd}. Type 'help' for available commands.`; } if (output) { const outputLine = document.createElement('div'); outputLine.className = 'terminal-line'; outputLine.style.color = '#00ff41'; outputLine.innerHTML = output.replace(/\n/g, '<br>'); terminal.appendChild(outputLine); } input.value = ''; terminal.scrollTop = terminal.scrollHeight; }
+        function logout() { if (confirm('Are you sure you want to logout?')) { pywebview.api.logout(); } }
+        window.addEventListener('load', () => { loadSystemInfo(); loadNetworkStats(); });
+    </script>
+</body>
+</html>
+```
+
+**Made BY SIR`
+

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #00ff41;
+        }
+
+        .container {
+            background: rgba(0, 20, 40, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+            border: 2px solid #00ff41;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .email-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff41;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            border-radius: 5px;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background: #00ff41;
+            color: #0a0e27;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+        }
+
+        .btn-secondary {
+            border-color: #666;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #666;
+            color: #0a0e27;
+        }
+
+        .message {
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .message.error {
+            background: rgba(255, 0, 64, 0.2);
+            border: 1px solid #ff0040;
+            color: #ff0040;
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            display: block;
+        }
+
+        .timer {
+            color: #ff0040;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            color: #666;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            color: #00ff41;
+        }
+
+        .loading {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff41;
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 OTP VERIFICATION</h1>
+        <p class="subtitle">Enter the 6-digit code sent to your email</p>
+        
+        <div class="email-display" id="emailDisplay"></div>
+
+        <div class="input-group">
+            <label>Enter OTP Code:</label>
+            <input type="text" id="otpInput" maxlength="6" placeholder="000000" autofocus>
+        </div>
+
+        <button class="btn" onclick="verifyOTP()">VERIFY OTP</button>
+        <button class="btn btn-secondary" onclick="resendOTP()">RESEND CODE</button>
+
+        <div class="loading" id="loading"></div>
+        <div class="message" id="message"></div>
+        <div class="timer" id="timer"></div>
+
+        <a class="back-link" onclick="goBack()">← Back to Login</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        const mode = urlParams.get('mode') || 'login';
+
+        document.getElementById('emailDisplay').textContent = email;
+
+        let timeLeft = 60;
+        const timerElement = document.getElementById('timer');
+
+        function startTimer() {
+            const interval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    timerElement.textContent = 'OTP expired. Please request a new code.';
+                    timerElement.style.color = '#ff0040';
+                } else {
+                    timerElement.textContent = `OTP expires in: ${timeLeft}s`;
+                    timerElement.style.color = timeLeft <= 10 ? '#ff0040' : '#00ff41';
+                }
+            }, 1000);
+        }
+
+        startTimer();
+
+        async function verifyOTP() {
+            const otp = document.getElementById('otpInput').value.trim();
+            const messageDiv = document.getElementById('message');
+            const loading = document.getElementById('loading');
+
+            if (!otp || otp.length !== 6) {
+                showMessage('Please enter a valid 6-digit OTP code!', 'error');
+                return;
+            }
+
+            loading.style.display = 'block';
+            messageDiv.style.display = 'none';
+
+            try {
+                const result = await pywebview.api.verify_otp(email, otp);
+                loading.style.display = 'none';
+
+                if (result.status === 'ok') {
+                    showMessage('✓ Verification successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        pywebview.api.open_dashboard(result.username);
+                    }, 1000);
+                } else {
+                    showMessage(result.message || 'Invalid OTP code!', 'error');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Connection error. Please try again.', 'error');
+            }
+        }
+
+        async function resendOTP() {
+            const messageDiv = document.getElementById('message');
+            const loading = document.getElementById('loading');
+
+            loading.style.display = 'block';
+            messageDiv.style.display = 'none';
+
+            try {
+                const result = await pywebview.api.resend_otp(email);
+                loading.style.display = 'none';
+
+                if (result.status === 'ok') {
+                    showMessage('✓ New OTP sent to your email!', 'success');
+                    timeLeft = 60;
+                    startTimer();
+                } else {
+                    showMessage(result.message || 'Failed to resend OTP!', 'error');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Connection error. Please try again.', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        function goBack() {
+            pywebview.api.open_login();
+        }
+
+        document.getElementById('otpInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyOTP();
+            }
+        });
+    </script>
+</body>
+</html>
